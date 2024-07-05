@@ -1,22 +1,269 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Project5", "Project5\Project5.vcxproj", "{EEEAF064-9D8F-48E4-BA47-3EC6978D3F4F}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Win32 = Debug|Win32
-		Release|Win32 = Release|Win32
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{EEEAF064-9D8F-48E4-BA47-3EC6978D3F4F}.Debug|Win32.ActiveCfg = Debug|Win32
-		{EEEAF064-9D8F-48E4-BA47-3EC6978D3F4F}.Debug|Win32.Build.0 = Debug|Win32
-		{EEEAF064-9D8F-48E4-BA47-3EC6978D3F4F}.Release|Win32.ActiveCfg = Release|Win32
-		{EEEAF064-9D8F-48E4-BA47-3EC6978D3F4F}.Release|Win32.Build.0 = Release|Win32
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-EndGlobal
+#include <iostream>
+#include <cstdlib>  
+#include "iGraphics.h"
+
+#define screenwidth 1200
+#define screenHeight 600
+#define JUMPLIMIT 150
+#define ENEMYNUM 20  
+
+int mposx, mposy;
+
+bool musicOn = false;
+int x = 0;
+int y = 0;
+int r = 255;
+int g = 255;
+int b = 255;
+
+int dx = 10;  
+int dy = 10;
+
+bool jump = false;
+bool jumpUp = false;
+
+bool isKicking = false; 
+int kickDuration = 5;    
+int kickCounter = 0;     
+
+int pandaCordinateJump = 0;
+
+char panda[4][50] = {
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\stand.bmp",
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\run1.bmp",
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\run2.bmp",
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\run3.bmp"
+};
+
+char pandaJ[1][50] = {
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\jump.bmp"
+};
+
+char pandaHurt[1][50] = {
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\hurt.bmp"
+};
+
+char pandaKick[1][50] = {
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\kick.bmp"
+};
+
+char enemyOne[2][50] = {
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\taistand.bmp",
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\spark.bmp"
+};
+
+char background[1][50] = {
+	"C:\\Users\\HP\\Desktop\\sd lab er game\\bg.bmp"  
+};
+
+int pandaX = 0;
+int pandaY = 0;
+int pandaIndex = 0;
+
+bool isMoving = false;
+int animationSpeed = 5; 
+int frameCounter = 0;
+
+struct Enemy {
+	int enemy_x;
+	int enemy_y;
+	int enemyIndex;
+	bool enemyShow;
+};
+
+Enemy enemy[ENEMYNUM];
+
+bool pandaHurtFlag = false;
+int sparkX = -100;  
+int sparkY = -100;  
+
+
+void enemyMovement();
+void checkCollision();
+
+void iDraw() {
+	iClear();
+	iShowBMP(0, 0, background[0]);  
+
+
+	
+	iSetColor(r, g, b);
+	if (pandaHurtFlag) {
+		iShowBMP2(pandaX, pandaY, pandaHurt[0], 0);
+		iShowBMP2(sparkX, sparkY, enemyOne[1], 0);  
+	}
+	else if (jump) {
+		iShowBMP2(pandaX, pandaY + pandaCordinateJump, pandaJ[0], 0);
+	}
+	else if (isKicking) {
+		iShowBMP2(pandaX, pandaY, pandaKick[0], 0);
+	}
+	else {
+		iShowBMP2(pandaX, pandaY, panda[pandaIndex], 0);
+	}
+	enemyMovement();
+}
+
+
+void enemyMovement() {
+	for (int i = 0; i < ENEMYNUM; i++) {
+		if (enemy[i].enemyShow) {
+			iShowBMP2(enemy[i].enemy_x, enemy[i].enemy_y, enemyOne[0], 0);
+		}
+	}
+}
+
+void iMouseMove(int mx, int my) {}
+
+void iPassiveMouseMove(int mx, int my) {}
+
+void iMouse(int button, int state, int mx, int my) {
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+	}
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+	}
+}
+
+void iKeyboard(unsigned char key) {
+	if (key == '\r') {
+	}
+	else if (key == ' ') {
+		if (!jump) {
+			jump = true;
+			jumpUp = true;
+		}
+	}
+	else if (key == 'x') {  
+		isKicking = true;
+		kickCounter = 0;  
+	}
+}
+
+void iSpecialKeyboard(unsigned char key) {
+	if (key == GLUT_KEY_LEFT) {
+		pandaX -= dx;  
+		isMoving = true;
+	}
+	else if (key == GLUT_KEY_RIGHT) {
+		pandaX += dx;  
+		isMoving = true;
+	}
+}
+
+void iSpecialKeyboardUp(unsigned char key) {
+	if (key == GLUT_KEY_LEFT || key == GLUT_KEY_RIGHT) {
+		isMoving = false;
+		pandaIndex = 0;
+	}
+}
+
+int timeCounter = 0;
+int currentEnemyIndex = 0;
+
+void change() {
+	if (isMoving) {
+		frameCounter++;
+		if (frameCounter >= animationSpeed) {
+			frameCounter = 0;
+			pandaIndex++;
+			if (pandaIndex >= 4) {
+				pandaIndex = 1;
+			}
+		}
+	}
+	else {
+		pandaIndex = 0; 
+	}
+
+	if (jump) {
+		if (jumpUp) {
+			pandaCordinateJump += 5;
+			if (pandaCordinateJump >= JUMPLIMIT) {
+				jumpUp = false;
+			}
+		}
+		else {
+			pandaCordinateJump -= 5;
+			if (pandaCordinateJump <= 0) {
+				jump = false;
+				pandaCordinateJump = 0;
+			}
+		}
+	}
+
+	if (isKicking) {
+		kickCounter++;
+		if (kickCounter >= kickDuration) {
+			isKicking = false;
+		}
+	}
+
+	for (int i = 0; i < ENEMYNUM; i++) {
+		if (enemy[i].enemyShow) {
+			enemy[i].enemy_x -= 15;  
+			if (enemy[i].enemy_x <= 0) {
+				enemy[i].enemy_x = screenwidth + rand() % 100;
+				enemy[i].enemyShow = false;  
+			}
+		}
+	}
+
+	checkCollision();
+
+	timeCounter++;
+	if (timeCounter >= 50) {  
+		timeCounter = 0;
+		int numEnemiesToSpawn = rand() % 3 + 1;  
+		for (int i = 0; i < numEnemiesToSpawn; i++) {
+			if (currentEnemyIndex < ENEMYNUM) {
+				enemy[currentEnemyIndex].enemy_x = screenwidth + rand() % 100;  
+				enemy[currentEnemyIndex].enemyShow = true;
+				currentEnemyIndex++;
+				if (currentEnemyIndex >= ENEMYNUM) {
+					currentEnemyIndex = 0;  
+				}
+			}
+		}
+	}
+}
+
+void checkCollision() {
+	for (int i = 0; i < ENEMYNUM; i++) {
+		if (enemy[i].enemyShow) {
+			bool horizontalOverlap = pandaX < enemy[i].enemy_x + 50 && pandaX + 50 > enemy[i].enemy_x;
+			bool verticalOverlap = pandaY < enemy[i].enemy_y + 50 && pandaY + 50 > enemy[i].enemy_y;
+
+			if (horizontalOverlap && verticalOverlap) {
+				if (isKicking) {
+					enemy[i].enemyShow = false;  
+				}
+				else if (!(pandaY + pandaCordinateJump > enemy[i].enemy_y + 50)) { 
+					pandaHurtFlag = true;
+					sparkX = pandaX + 25;  
+					sparkY = pandaY + 25;
+					return;
+				}
+			}
+		}
+	}
+	pandaHurtFlag = false;
+	sparkX = -100;  
+	sparkY = -100;
+}
+
+void setEnemyVariables() {
+	for (int i = 0; i < ENEMYNUM; i++) {
+		enemy[i].enemy_x = screenwidth + rand() % 100; 
+		enemy[i].enemy_y = 0;  
+		enemy[i].enemyIndex = rand() % 10;
+		enemy[i].enemyShow = false;
+	}
+}
+
+int main() {
+	setEnemyVariables();
+	iInitialize(screenwidth, screenHeight, "Panda Rush");
+	iSetTimer(30, change);  
+	iStart();
+	return 0;
+}
