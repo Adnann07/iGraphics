@@ -1,59 +1,72 @@
 #include <iostream>
-#include <cstdlib>  
+#include <cstdlib>
 #include "iGraphics.h"
 
 #define screenwidth 1200
 #define screenHeight 600
-#define JUMPLIMIT 150
-#define ENEMYNUM 20  
+#define JUMPLIMIT 120
+#define ENEMYNUM 20
 
 int mposx, mposy;
 
-bool musicOn = false;
+bool musicOn = true;
 int x = 0;
 int y = 0;
 int r = 255;
 int g = 255;
 int b = 255;
 
-int dx = 10;  
+int dx = 10;
 int dy = 10;
 
 bool jump = false;
 bool jumpUp = false;
 
-bool isKicking = false; 
-int kickDuration = 5;    
-int kickCounter = 0;     
+bool isKicking = false;
+int kickDuration = 7;
+int kickCounter = 0;
 
 int pandaCordinateJump = 0;
 
-char panda[4][50] = {
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\stand.bmp",
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\run1.bmp",
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\run2.bmp",
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\run3.bmp"
+struct Image {
+    char path[50];
 };
 
-char pandaJ[1][50] = {
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\jump.bmp"
+Image panda[4] = {
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\stand.bmp" },
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\run1.bmp" },
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\run2.bmp" },
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\run3.bmp" }
 };
 
-char pandaHurt[1][50] = {
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\hurt.bmp"
+Image pandaJ[1] = {
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\jump.bmp" }
 };
 
-char pandaKick[1][50] = {
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\kick.bmp"
+Image pandaHurt[1] = {
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\hurt.bmp" }
 };
 
-char enemyOne[2][50] = {
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\taistand.bmp",
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\spark.bmp"
+Image pandaKick[1] = {
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\kick.bmp" }
 };
 
-char background[1][50] = {
-	"C:\\Users\\HP\\Desktop\\sd lab er game\\bg.bmp"  
+Image enemyOne[2] = {
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\taistand.bmp" },
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\spark.bmp" }
+};
+
+Image enemyF[2] = {
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\f.bmp" },
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\spark.bmp" }
+};
+
+Image background[1] = {
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\bg.bmp" }
+};
+
+Image heart[1] = {
+    { "C:\\Users\\HP\\Desktop\\sd lab er game\\heart.bmp" }
 };
 
 int pandaX = 0;
@@ -61,56 +74,72 @@ int pandaY = 0;
 int pandaIndex = 0;
 
 bool isMoving = false;
-int animationSpeed = 5; 
+int animationSpeed = 3;
 int frameCounter = 0;
 
 struct Enemy {
-	int enemy_x;
-	int enemy_y;
-	int enemyIndex;
-	bool enemyShow;
+    int enemy_x;
+    int enemy_y;
+    bool enemyShow;
+    int enemyType;
 };
 
-Enemy enemy[ENEMYNUM];
+Enemy enemies[ENEMYNUM];
 
 bool pandaHurtFlag = false;
-int sparkX = -100;  
-int sparkY = -100;  
+int sparkX = -100;
+int sparkY = -100;
 
+int collisionCount = 0;
+int heartsRemaining = 6;
 
 void enemyMovement();
 void checkCollision();
 
 void iDraw() {
-	iClear();
-	iShowBMP(0, 0, background[0]);  
+    iClear();
+    iShowBMP(0, 0, background[0].path);
 
+    for (int i = 0; i < heartsRemaining; i++) {
+        iShowBMP2(screenwidth - 100 * (i + 1), screenHeight - 100, heart[0].path, 0);
+    }
 
-	
-	iSetColor(r, g, b);
-	if (pandaHurtFlag) {
-		iShowBMP2(pandaX, pandaY, pandaHurt[0], 0);
-		iShowBMP2(sparkX, sparkY, enemyOne[1], 0);  
-	}
-	else if (jump) {
-		iShowBMP2(pandaX, pandaY + pandaCordinateJump, pandaJ[0], 0);
-	}
-	else if (isKicking) {
-		iShowBMP2(pandaX, pandaY, pandaKick[0], 0);
-	}
-	else {
-		iShowBMP2(pandaX, pandaY, panda[pandaIndex], 0);
-	}
-	enemyMovement();
+    iSetColor(r, g, b);
+    if (pandaHurtFlag) {
+        iShowBMP2(pandaX, pandaY, pandaHurt[0].path, 0);
+        iShowBMP2(sparkX, sparkY, enemyOne[1].path, 0);
+    } else if (jump || pandaCordinateJump > 0) {
+        if (isKicking) {
+            iShowBMP2(pandaX, pandaY + pandaCordinateJump, pandaKick[0].path, 0);
+        } else {
+            iShowBMP2(pandaX, pandaY + pandaCordinateJump, pandaJ[0].path, 0);
+        }
+    } else {
+        if (isKicking) {
+            iShowBMP2(pandaX, pandaY, pandaKick[0].path, 0);
+        } else {
+            iShowBMP2(pandaX, pandaY, panda[pandaIndex].path, 0);
+        }
+    }
+    enemyMovement();
 }
 
-
 void enemyMovement() {
-	for (int i = 0; i < ENEMYNUM; i++) {
-		if (enemy[i].enemyShow) {
-			iShowBMP2(enemy[i].enemy_x, enemy[i].enemy_y, enemyOne[0], 0);
-		}
-	}
+    for (int i = 0; i < ENEMYNUM; i++) {
+        if (enemies[i].enemyShow) {
+            if (enemies[i].enemyType == 1) {
+                iShowBMP2(enemies[i].enemy_x, enemies[i].enemy_y, enemyOne[0].path, 0);
+            } else if (enemies[i].enemyType == 2) {
+                iShowBMP2(enemies[i].enemy_x, enemies[i].enemy_y, enemyF[0].path, 0);
+            }
+
+            enemies[i].enemy_x -= 15;
+            if (enemies[i].enemy_x <= 0) {
+                enemies[i].enemy_x = screenwidth + rand() % 100;
+                enemies[i].enemyShow = false;
+            }
+        }
+    }
 }
 
 void iMouseMove(int mx, int my) {}
@@ -118,152 +147,157 @@ void iMouseMove(int mx, int my) {}
 void iPassiveMouseMove(int mx, int my) {}
 
 void iMouse(int button, int state, int mx, int my) {
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-	}
-	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-	}
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+    }
+    if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+    }
 }
 
 void iKeyboard(unsigned char key) {
-	if (key == '\r') {
-	}
-	else if (key == ' ') {
-		if (!jump) {
-			jump = true;
-			jumpUp = true;
-		}
-	}
-	else if (key == 'x') {  
-		isKicking = true;
-		kickCounter = 0;  
-	}
+    if (key == '\r') {
+    } else if (key == ' ') {
+        if (!jump) {
+            jump = true;
+            jumpUp = true;
+        }
+    } else if (key == 'x') {
+        isKicking = true;
+        kickCounter = 0;
+    }
 }
 
 void iSpecialKeyboard(unsigned char key) {
-	if (key == GLUT_KEY_LEFT) {
-		pandaX -= dx;  
-		isMoving = true;
-	}
-	else if (key == GLUT_KEY_RIGHT) {
-		pandaX += dx;  
-		isMoving = true;
-	}
+    if (key == GLUT_KEY_LEFT) {
+        pandaX -= dx;
+        isMoving = true;
+    } else if (key == GLUT_KEY_RIGHT) {
+        pandaX += dx;
+        isMoving = true;
+    }
 }
 
 void iSpecialKeyboardUp(unsigned char key) {
-	if (key == GLUT_KEY_LEFT || key == GLUT_KEY_RIGHT) {
-		isMoving = false;
-		pandaIndex = 0;
-	}
+    if (key == GLUT_KEY_LEFT || key == GLUT_KEY_RIGHT) {
+        isMoving = false;
+        pandaIndex = 0;
+    }
 }
 
 int timeCounter = 0;
 int currentEnemyIndex = 0;
 
 void change() {
-	if (isMoving) {
-		frameCounter++;
-		if (frameCounter >= animationSpeed) {
-			frameCounter = 0;
-			pandaIndex++;
-			if (pandaIndex >= 4) {
-				pandaIndex = 1;
-			}
-		}
-	}
-	else {
-		pandaIndex = 0; 
-	}
+    if (isMoving) {
+        frameCounter++;
+        if (frameCounter >= animationSpeed) {
+            frameCounter = 0;
+            pandaIndex++;
+            if (pandaIndex >= 4) {
+                pandaIndex = 1;
+            }
+        }
+    } else {
+        pandaIndex = 0;
+    }
 
-	if (jump) {
-		if (jumpUp) {
-			pandaCordinateJump += 5;
-			if (pandaCordinateJump >= JUMPLIMIT) {
-				jumpUp = false;
-			}
-		}
-		else {
-			pandaCordinateJump -= 5;
-			if (pandaCordinateJump <= 0) {
-				jump = false;
-				pandaCordinateJump = 0;
-			}
-		}
-	}
+    if (jump) {
+        if (jumpUp) {
+            pandaCordinateJump += 10;
+            if (pandaCordinateJump >= JUMPLIMIT) {
+                jumpUp = false;
+            }
+        } else {
+            pandaCordinateJump -= 10;
+            if (pandaCordinateJump <= 0) {
+                jump = false;
+                pandaCordinateJump = 0;
+            }
+        }
+    }
 
-	if (isKicking) {
-		kickCounter++;
-		if (kickCounter >= kickDuration) {
-			isKicking = false;
-		}
-	}
+    if (isKicking) {
+        kickCounter++;
+        if (kickCounter >= kickDuration) {
+            isKicking = false;
+        }
+    }
 
-	for (int i = 0; i < ENEMYNUM; i++) {
-		if (enemy[i].enemyShow) {
-			enemy[i].enemy_x -= 15;  
-			if (enemy[i].enemy_x <= 0) {
-				enemy[i].enemy_x = screenwidth + rand() % 100;
-				enemy[i].enemyShow = false;  
-			}
-		}
-	}
+    checkCollision();
 
-	checkCollision();
-
-	timeCounter++;
-	if (timeCounter >= 50) {  
-		timeCounter = 0;
-		int numEnemiesToSpawn = rand() % 3 + 1;  
-		for (int i = 0; i < numEnemiesToSpawn; i++) {
-			if (currentEnemyIndex < ENEMYNUM) {
-				enemy[currentEnemyIndex].enemy_x = screenwidth + rand() % 100;  
-				enemy[currentEnemyIndex].enemyShow = true;
-				currentEnemyIndex++;
-				if (currentEnemyIndex >= ENEMYNUM) {
-					currentEnemyIndex = 0;  
-				}
-			}
-		}
-	}
+    timeCounter++;
+    if (timeCounter >= 50) {
+        timeCounter = 0;
+        int numEnemiesToSpawn = rand() % 3 + 1;
+        for (int i = 0; i < numEnemiesToSpawn; i++) {
+            if (currentEnemyIndex < ENEMYNUM) {
+                enemies[currentEnemyIndex].enemy_x = screenwidth + rand() % 100;
+                enemies[currentEnemyIndex].enemyShow = true;
+                enemies[currentEnemyIndex].enemyType = rand() % 2 + 1; // Randomize enemy type
+                if (enemies[currentEnemyIndex].enemyType == 2) {
+                    enemies[currentEnemyIndex].enemy_y = JUMPLIMIT - rand() % 50; // Flying enemy initial y-coordinate within jump limit
+                } else {
+                    enemies[currentEnemyIndex].enemy_y = 0; // Ground enemy initial y-coordinate
+                }
+                currentEnemyIndex++;
+                if (currentEnemyIndex >= ENEMYNUM) {
+                    currentEnemyIndex = 0;
+                }
+            }
+        }
+    }
 }
 
 void checkCollision() {
 	for (int i = 0; i < ENEMYNUM; i++) {
-		if (enemy[i].enemyShow) {
-			bool horizontalOverlap = pandaX < enemy[i].enemy_x + 50 && pandaX + 50 > enemy[i].enemy_x;
-			bool verticalOverlap = pandaY < enemy[i].enemy_y + 50 && pandaY + 50 > enemy[i].enemy_y;
+		if (enemies[i].enemyShow) {
+			bool horizontalOverlap = pandaX < enemies[i].enemy_x + 50 && pandaX + 50 > enemies[i].enemy_x;
+			bool verticalOverlap = pandaY + pandaCordinateJump < enemies[i].enemy_y + 50 && pandaY + pandaCordinateJump + 50 > enemies[i].enemy_y;
 
 			if (horizontalOverlap && verticalOverlap) {
 				if (isKicking) {
-					enemy[i].enemyShow = false;  
+					// If panda is kicking, Tai vanishes without panda taking damage
+					enemies[i].enemyShow = false; // Tai vanishes
 				}
-				else if (!(pandaY + pandaCordinateJump > enemy[i].enemy_y + 50)) { 
+				else {
+					// Normal collision logic when not kicking
 					pandaHurtFlag = true;
-					sparkX = pandaX + 25;  
+					sparkX = pandaX + 25;
 					sparkY = pandaY + 25;
+					collisionCount++;
+					heartsRemaining--;
+					enemies[i].enemyShow = false; // Tai vanishes upon collision
+					if (heartsRemaining <= 0) {
+						// Handle game-over logic if necessary
+					}
 					return;
 				}
 			}
 		}
 	}
+	// Reset hurt flag if no collision occurs
 	pandaHurtFlag = false;
-	sparkX = -100;  
+	sparkX = -100;
 	sparkY = -100;
 }
 
+
+
 void setEnemyVariables() {
-	for (int i = 0; i < ENEMYNUM; i++) {
-		enemy[i].enemy_x = screenwidth + rand() % 100; 
-		enemy[i].enemy_y = 0;  
-		enemy[i].enemyIndex = rand() % 10;
-		enemy[i].enemyShow = false;
-	}
+    for (int i = 0; i < ENEMYNUM; i++) {
+        enemies[i].enemy_x = screenwidth + rand() % 100;
+        enemies[i].enemy_y = 0;
+        enemies[i].enemyShow = false;
+        enemies[i].enemyType = rand() % 2 + 1; // Randomize enemy type
+        if (enemies[i].enemyType == 2) {
+            enemies[i].enemy_y = JUMPLIMIT - rand() % 50; // Flying enemy initial y-coordinate within jump limit
+        }
+    }
 }
 
 int main() {
-	setEnemyVariables();
-	iInitialize(screenwidth, screenHeight, "Panda Rush");
-	iSetTimer(30, change);  
-	iStart();
-	return 0;
+    setEnemyVariables();
+    iInitialize(screenwidth, screenHeight, "Panda Rush");
+    iSetTimer(30, change);
+    iStart();
+    return 0;
 }
