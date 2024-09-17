@@ -1,0 +1,181 @@
+#include "iGraphics.h"
+#include <sstream>
+#include <string>
+
+
+std::string intToString(int num) {
+	std::stringstream ss;
+	ss << num;
+	return ss.str();
+}
+
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::Idraw Here::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
+
+int box_x = 10;
+int box_y = 10;
+int box2_x = 200;
+int box2_y = 390;
+int ball_x = 100 + rand() % 200;
+int ball_y = 100 + rand() % 150;
+int dx = 5;
+int dy = 5;
+int score1 = 0;
+int score2 = 0;
+
+const int screenWidth = 600;
+const int screenHeight = 400;
+const int blockWidth = 100;
+
+void resetBall() {
+	ball_x = 100 + rand() % 200;
+	ball_y = 100 + rand() % 150;
+	dx = 5;
+	dy = 5;
+}
+
+char pan[1][50] = { "C:\\Users\\HP\\Desktop\\sd lab er game\\pandaface.bmp"};
+char tai[1][50] = { "C:\\Users\\HP\\Desktop\\sd lab er game\\tai.bmp" };
+
+void iDraw() {
+	iClear();
+	iSetColor(255, 0, 0);
+
+	iShowBMP2(540, 350, pan[0], 0);
+
+	iShowBMP2(10, 10, tai[0], 0);
+	iFilledRectangle(box_x, box_y, 100, 10);
+
+
+
+	iSetColor(255, 0, 255);
+	iFilledRectangle(box2_x, box2_y, 100, 10);
+
+	iSetColor(0, 255, 0);
+	iFilledCircle(ball_x, ball_y, 10, 100);
+
+	iSetColor(255, 255, 255);
+	iText(10, 380, "Po Score:  ", GLUT_BITMAP_HELVETICA_18);
+	std::string score1_str = intToString(score1);
+	iText(120, 380, const_cast<char*>(score1_str.c_str()), GLUT_BITMAP_HELVETICA_18);
+
+	iText(10, 360, "Lung Score:  ", GLUT_BITMAP_HELVETICA_18);
+	std::string score2_str = intToString(score2);
+	iText(120, 360, const_cast<char*>(score2_str.c_str()), GLUT_BITMAP_HELVETICA_18);
+}
+
+/*function iMouseMove() is called when the user presses and drags the mouse.
+(mx, my) is the position where the mouse pointer is.
+*/
+
+void iMouseMove(int mx, int my) {
+
+}
+
+//*******************************************************************ipassiveMouse***********************************************************************//
+void iPassiveMouseMove(int mx, int my) {
+
+}
+
+void iMouse(int button, int state, int mx, int my) {
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+
+	}
+
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
+
+	}
+}
+
+/*
+function iKeyboard() is called whenever the user hits a key in keyboard.
+key- holds the ASCII value of the key pressed.
+*/
+
+void iKeyboard(unsigned char key) {
+	if (key == 'd') {
+		box2_x += 20;
+		if (box2_x + blockWidth > screenWidth) {
+			box2_x = screenWidth - blockWidth;
+		}
+	}
+	if (key == 'a') {
+		box2_x -= 20;
+		if (box2_x < 0) {
+			box2_x = 0;
+		}
+	}
+
+	if (key == '3') {
+		box_x += 20;
+		if (box_x + blockWidth > screenWidth) {
+			box_x = screenWidth - blockWidth;
+		}
+	}
+	if (key == '1') {
+		box_x -= 20;
+		if (box_x < 0) {
+			box_x = 0;
+		}
+	}
+}
+
+/*
+function iSpecialKeyboard() is called whenever user hits special keys like-
+function keys, home, end, pg up, pg down, arrows etc. you have to use
+appropriate constants to detect them. A list is:
+GLUT_KEY_F1, GLUT_KEY_F2, GLUT_KEY_F3, GLUT_KEY_F4, GLUT_KEY_F5, GLUT_KEY_F6,
+GLUT_KEY_F7, GLUT_KEY_F8, GLUT_KEY_F9, GLUT_KEY_F10, GLUT_KEY_F11, GLUT_KEY_F12,
+GLUT_KEY_LEFT, GLUT_KEY_UP, GLUT_KEY_RIGHT, GLUT_KEY_DOWN, GLUT_KEY_PAGE UP,
+GLUT_KEY_PAGE DOWN, GLUT_KEY_HOME, GLUT_KEY_END, GLUT_KEY_INSERT
+*/
+
+void iSpecialKeyboard(unsigned char key) {
+	if (key == GLUT_KEY_RIGHT) {
+
+	}
+	if (key == GLUT_KEY_LEFT) {
+
+	}
+
+	if (key == GLUT_KEY_HOME) {
+
+	}
+}
+
+void ballchange() {
+	ball_x += dx;
+	ball_y += dy;
+	if (((ball_x <= box_x + 80 && ball_x >= box_x - 50) && (ball_y <= box_y + 30))) {
+		dx = -(dx + rand() % 2);
+		dy = -dy;
+	}
+	if (((ball_x <= box2_x + 80 && ball_x >= box2_x - 50) && (ball_y >= box2_y))) {
+		dx = -(dx + rand() % 2);
+		dy = -dy;
+	}
+
+	if ((ball_x >= 600 || ball_x <= 0) && (ball_y <= 400)) {
+		dx = -dx;
+	}
+
+	// Ball misses  bottom block
+	if (ball_y <= 0) {
+		score2++;
+		resetBall();
+	}
+
+	// Ball misses  top block
+	if (ball_y >= 400) {
+		score1++;
+		resetBall();
+	}
+}
+
+int main() {
+
+	iInitialize(600, 400, "Project Title");
+	iSetTimer(30, ballchange);
+	
+	iStart();
+	return 0;
+}
