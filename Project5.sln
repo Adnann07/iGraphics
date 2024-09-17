@@ -4,19 +4,21 @@
 #include <mmsystem.h>
 #include "iGraphics.h"
 
+
 #define screenwidth 1200
 #define screenHeight 600
-#define JUMPLIMIT 120
+#define JUMPLIMIT 190
 #define ENEMYNUM 20
 
 int mposx, mposy;
 
-bool musicOn = true;
+bool musicOn = false;
 int x = 0;
 int y = 0;
 int r = 255;
 int g = 255;
 int b = 255;
+
 
 int dx = 10;
 int dy = 10;
@@ -76,8 +78,8 @@ int pandaY = 0;
 int pandaIndex = 0;
 
 bool isMoving = false;
-int animationSpeed = 3;
-int frameCounter = 0;
+int animationSpeed = 2;
+int frameCounter = 10;
 
 struct Enemy {
     int enemy_x;
